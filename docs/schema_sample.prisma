@@ -1,0 +1,138 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id                  String    @id @default(uuid()) @db.Char(36)
+    email               String    @unique
+    password_hash       String    @db.VarChar(255)
+    name                String    @db.VarChar(100)
+    university          String?   @db.VarChar(200)
+    grade               String?   @db.VarChar(50)
+    birth_date          DateTime?
+    self_introduction   String?
+    is_active           Boolean   @default(true)
+    email_verified      Boolean   @default(false)
+    verification_token  String?   @db.VarChar(255)
+    reset_token         String?   @db.VarChar(255)
+    reset_token_expires DateTime?
+    created_at          DateTime  @default(now())
+    updated_at          DateTime  @updatedAt
+
+    sessions   Session[]
+    portfolios Portfolio[]
+}
+
+model Recruiter {
+    id                  String    @id @default(uuid()) @db.Char(36)
+    company_name        String    @db.VarChar(200)
+    name                String    @db.VarChar(100)
+    email               String    @unique
+    password_hash       String    @db.VarChar(255)
+    position            String?   @db.VarChar(100)
+    department          String?   @db.VarChar(100)
+    phone               String?   @db.VarChar(20)
+    is_active           Boolean   @default(true)
+    email_verified      Boolean   @default(false)
+    verification_token  String?   @db.VarChar(255)
+    reset_token         String?   @db.VarChar(255)
+    reset_token_expires DateTime?
+    created_at          DateTime  @default(now())
+    updated_at          DateTime  @updatedAt
+
+    sessions Session[]
+}
+
+model Session {
+    id           String   @id @default(uuid()) @db.Char(36)
+    user_id      String?  @db.Char(36)
+    recruiter_id String?  @db.Char(36)
+    user_type    UserType
+    token        String   @unique @db.VarChar(255)
+    expires_at   DateTime
+    ip_address   String?  @db.VarChar(45)
+    user_agent   String?
+    created_at   DateTime @default(now())
+
+    user      User?      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    recruiter Recruiter? @relation(fields: [recruiter_id], references: [id], onDelete: Cascade)
+}
+
+model Portfolio {
+    id                         String   @id @default(uuid()) @db.Char(36)
+    user_id                    String   @db.Char(36)
+    is_public                  Boolean  @default(true)
+    auto_delete_after_one_year Boolean  @default(false)
+    created_at                 DateTime @default(now())
+    updated_at                 DateTime @updatedAt
+
+    user       User                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    basic_info PortfolioBasicInfo?
+    skills     PortfolioSkills?
+    experience PortfolioExperience?
+    projects   PortfolioProject[]
+}
+
+model PortfolioBasicInfo {
+    id                String   @id @default(uuid()) @db.Char(36)
+    portfolio_id      String   @unique @db.Char(36)
+    name              String   @db.VarChar(100)
+    university        String   @db.VarChar(200)
+    grade             String   @db.VarChar(50)
+    birth_date        DateTime
+    email             String   @db.VarChar(255)
+    self_introduction String?
+    created_at        DateTime @default(now())
+    updated_at        DateTime @updatedAt
+
+    portfolio Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
+}
+
+model PortfolioSkills {
+    id             String   @id @default(uuid()) @db.Char(36)
+    portfolio_id   String   @unique @db.Char(36)
+    skill_tags     Json?
+    certifications String?
+    created_at     DateTime @default(now())
+    updated_at     DateTime @updatedAt
+
+    portfolio Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
+}
+
+model PortfolioProject {
+    id           String   @id @default(uuid()) @db.Char(36)
+    portfolio_id String   @db.Char(36)
+    name         String   @db.VarChar(200)
+    description  String
+    url          String?  @db.VarChar(500)
+    sort_order   Int      @default(0)
+    created_at   DateTime @default(now())
+    updated_at   DateTime @updatedAt
+
+    portfolio Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
+
+    @@index([portfolio_id])
+    @@index([sort_order])
+}
+
+model PortfolioExperience {
+    id              String   @id @default(uuid()) @db.Char(36)
+    portfolio_id    String   @unique @db.Char(36)
+    internship      String?
+    extracurricular String?
+    awards          String?
+    created_at      DateTime @default(now())
+    updated_at      DateTime @updatedAt
+
+    portfolio Portfolio @relation(fields: [portfolio_id], references: [id], onDelete: Cascade)
+}
+
+enum UserType {
+    user
+    recruiter
+}

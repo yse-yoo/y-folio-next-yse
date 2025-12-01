@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" // XAMPPの場合
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())  // 内部的に使うユーザーID
+  name      String?
+  email     String?  @unique
+  phone     String?
+  address    String?
+  birthday  DateTime?
+  accounts  Account[]  // 複数のSNSログインを紐づけられる
+  portfolios Portfolio[]
+}
+
+model Account {
+  id            String   @id @default(cuid())
+  provider      String   // "google", "github", "twitter" など
+  providerUserId String   // Googleならsub, GitHubならid など
+  userId        String
+
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerUserId]) // プロバイダごとに一意
+}
+
+model Portfolio {
+  id          String   @id @default(uuid())
+  userId      String
+  university  String
+  faculty     String
+  grade       String
+  email       String
+  selfIntroduction String   @db.Text
+  skillTags   String   @db.Text
+  certifications String @db.Text
+  projects    String   @db.Text
+  experience  String   @db.Text
+  other       String   @db.Text
+  publication String   @db.Text
+  visibilitySettings String @db.Text
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model ResumeReviewHistory {
+  id             String   @id @default(cuid())
+  userId         String
+  tone           String
+  language       String
+  writingStyle   String?
+  honorific      String?
+  audience       String?
+  companyContext String?
+  sections       Json
+  result         Json
+  createdAt      DateTime @default(now())
+
+  @@index([userId], map: "idx_resume_history_user")
+}
+
+model ReviewLog {
+  id                   String   @id @default(cuid())
+  userId               String?
+  tone                 String
+  language             String
+  writingStyle         String?
+  sectionStats         Json
+  overallScore         Int?
+  averageSectionScore  Float?
+  totalSections        Int
+  createdAt            DateTime @default(now())
+
+  @@index([userId, createdAt], map: "idx_review_log_user_created_at")
+}
+
+model ReviewReminder {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  status      String   @default("pending")
+  channel     String   @default("in-app")
+  scheduledAt DateTime
+  payload     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, scheduledAt], map: "idx_review_reminder_user_schedule")
+  @@index([status, scheduledAt], map: "idx_review_reminder_status_schedule")
+}
