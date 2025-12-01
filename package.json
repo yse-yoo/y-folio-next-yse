@@ -12,6 +12,7 @@
     "@google/genai": "^1.10.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.10.1",
+    "bcryptjs": "^3.0.3",
     "culori": "^4.0.2",
     "diff": "^5.2.0",
     "docx": "^9.5.1",
