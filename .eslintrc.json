@@ -1,0 +1,7 @@
+{
+    "extends": "next/core-web-vitals",
+    "rules": {
+        // これを追加：any型を許可する（警告も出さない）
+        "@typescript-eslint/no-explicit-any": "off"
+    }
+}
