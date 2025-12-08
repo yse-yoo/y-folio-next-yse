@@ -37,15 +37,28 @@ const normalizeAudience = (value: unknown): ReviewAudience | undefined => {
 };
 
 const normalizeSections = (value: unknown): ResumeSectionInput[] => {
+  // 1. 配列でなければ空配列を返す
   if (!Array.isArray(value)) return [];
-  return value
+
+  return (value as unknown[]) // 2. ここで明示的に unknown[] 型とすることで、map内の item が any になるのを防ぐ
     .map((item, index) => {
+      // 3. item がオブジェクトであることを確認
       if (!item || typeof item !== "object") return null;
-      const section = item as Partial<ResumeSectionInput>;
-      const text = typeof section.text === "string" ? section.text : "";
+
+      // 4. 安全にプロパティにアクセスするために Record<string, unknown> として扱う
+      // (これで "Unexpected any" エラーを回避できます)
+      const rawItem = item as Record<string, unknown>;
+
+      // 5. 各プロパティの型チェックを行いながら取得
+      const text = typeof rawItem.text === "string" ? rawItem.text : "";
+      
+      // テキストが空ならそのセクションは無効とする
       if (text.trim().length === 0) return null;
-      const title = typeof section.title === "string" ? section.title : "";
-      const id = typeof section.id === "string" ? section.id : `section-${index + 1}`;
+
+      const title = typeof rawItem.title === "string" ? rawItem.title : "";
+      const id = typeof rawItem.id === "string" ? rawItem.id : `section-${index + 1}`;
+
+      // 6. ResumeSectionInput 型に合わせて返す
       return {
         id,
         title: title || `セクション${index + 1}`,
